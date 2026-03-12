@@ -1,168 +1,132 @@
 """
-数据模型 - 小红书账号模型
+数据库模型 - 小红书相关
 """
-
 from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Float, ForeignKey, Enum, JSON
+from sqlalchemy.orm import relationship
 from app.core.database import Base
+import enum
+
+class LoginStatus(str, enum.Enum):
+    UNKNOWN = "unknown"
+    VALID = "valid"
+    EXPIRED = "expired"
+    INVALID = "invalid"
 
 
 class XHSAccount(Base):
     """小红书账号模型"""
     __tablename__ = "xhs_accounts"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # 账号信息
-    name: Mapped[str] = mapped_column(String(100), comment="账号名称/备注")
+    name = Column(String(100), nullable=False)
+    xhs_id = Column(String(100), nullable=True)
     
-    # 登录凭证
-    cookie_web_session: Mapped[Optional[str]] = mapped_column(Text)
-    cookie_a1: Mapped[Optional[str]] = mapped_column(Text)
+    # Cookie
+    cookie_web_session = Column(Text, nullable=True)
+    cookie_a1 = Column(Text, nullable=True)
     
-    # 账号信息
-    xhs_user_id: Mapped[Optional[str]] = mapped_column(String(100), index=True)
-    nickname: Mapped[Optional[str]] = mapped_column(String(100))
-    avatar: Mapped[Optional[str]] = mapped_column(String(500))
-    follower_count: Mapped[Optional[int]] = mapped_column(Integer, default=0)
-    
-    # 监控配置
-    monitor_comments: Mapped[bool] = mapped_column(Boolean, default=True)
-    monitor_messages: Mapped[bool] = mapped_column(Boolean, default=False)
-    monitor_note_ids: Mapped[Optional[str]] = mapped_column(Text, comment="指定笔记ID，多个用逗号分隔")
-    ignored_users: Mapped[Optional[str]] = mapped_column(Text, comment="忽略用户ID，多个用逗号分隔")
+    # 监控设置
+    monitor_comments = Column(Boolean, default=True)
+    monitor_messages = Column(Boolean, default=False)
+    monitor_note_ids = Column(JSON, default=list)
+    ignored_users = Column(JSON, default=list)
     
     # 状态
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    login_status: Mapped[str] = mapped_column(String(20), default="unknown")  # unknown/valid/invalid/expired
-    last_check_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    cookie_expire_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    
-    # 时间戳
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    login_status = Column(String(20), default=LoginStatus.UNKNOWN.value)
+    is_active = Column(Boolean, default=True)
+    last_checked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    user: Mapped["User"] = relationship("User", back_populates="accounts")
-    reply_rules: Mapped[list["ReplyRule"]] = relationship(
-        "ReplyRule",
-        back_populates="account",
-        cascade="all, delete-orphan"
-    )
-    
-    def __repr__(self):
-        return f"<XHSAccount(id={self.id}, name={self.name})>"
+    user = relationship("User", back_populates="accounts")
+    rules = relationship("ReplyRule", back_populates="account", cascade="all, delete-orphan")
+    reply_history = relationship("ReplyHistory", back_populates="account", cascade="all, delete-orphan")
 
 
 class ReplyRule(Base):
     """回复规则模型"""
     __tablename__ = "reply_rules"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    account_id: Mapped[Optional[int]] = mapped_column(ForeignKey("xhs_accounts.id"), nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    account_id = Column(Integer, ForeignKey("xhs_accounts.id"), nullable=True)
     
     # 规则信息
-    name: Mapped[str] = mapped_column(String(100))
-    rule_type: Mapped[str] = mapped_column(String(20), comment="comment/private_message")
-    match_type: Mapped[str] = mapped_column(String(20), default="fuzzy")  # exact/fuzzy/semantic
+    name = Column(String(100), nullable=False)
+    rule_type = Column(String(20), default="keyword")  # keyword, ai, random
+    keywords = Column(JSON, default=list)  # 关键词列表
+    reply_content = Column(Text, nullable=False)  # 回复内容
+    ai_prompt = Column(Text, nullable=True)  # AI回复提示词
     
-    # 关键词和回复
-    keywords: Mapped[str] = mapped_column(Text, comment="关键词，多个用逗号分隔")
-    reply_templates: Mapped[str] = mapped_column(Text, comment="回复模板，多个用换行符分隔")
-    
-    # 高级配置
-    priority: Mapped[int] = mapped_column(Integer, default=1)
-    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    use_ai_reply: Mapped[bool] = mapped_column(Boolean, default=False)
-    ai_prompt: Mapped[Optional[str]] = mapped_column(Text)
+    # 设置
+    match_type = Column(String(20), default="exact")  # exact, fuzzy, regex
+    priority = Column(Integer, default=0)
+    is_enabled = Column(Boolean, default=True)
+    reply_delay = Column(Integer, default=0)  # 回复延迟（秒）
     
     # 统计
-    match_count: Mapped[int] = mapped_column(Integer, default=0)
-    reply_count: Mapped[int] = mapped_column(Integer, default=0)
+    match_count = Column(Integer, default=0)
+    reply_count = Column(Integer, default=0)
     
-    # 时间戳
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    user: Mapped["User"] = relationship("User", back_populates="reply_rules")
-    account: Mapped[Optional["XHSAccount"]] = relationship("XHSAccount", back_populates="reply_rules")
-    
-    @property
-    def keywords_list(self) -> list[str]:
-        return [k.strip() for k in self.keywords.split(",") if k.strip()]
-    
-    @property
-    def templates_list(self) -> list[str]:
-        return [t.strip() for t in self.reply_templates.split("\n") if t.strip()]
-    
-    def __repr__(self):
-        return f"<ReplyRule(id={self.id}, name={self.name})>"
+    user = relationship("User", back_populates="reply_rules")
+    account = relationship("XHSAccount", back_populates="rules", foreign_keys="ReplyRule.account_id")
 
 
 class ReplyHistory(Base):
     """回复历史模型"""
     __tablename__ = "reply_history"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    account_id: Mapped[int] = mapped_column(ForeignKey("xhs_accounts.id"))
-    rule_id: Mapped[Optional[int]] = mapped_column(ForeignKey("reply_rules.id"), nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("xhs_accounts.id"), nullable=False)
+    rule_id = Column(Integer, ForeignKey("reply_rules.id"), nullable=True)
     
-    # 内容信息
-    target_type: Mapped[str] = mapped_column(String(20))  # comment/private_message
-    target_id: Mapped[str] = mapped_column(String(100), index=True)  # 评论ID/消息ID
-    target_user_id: Mapped[Optional[str]] = mapped_column(String(100))
-    target_content: Mapped[str] = mapped_column(Text)
+    # 评论信息
+    comment_id = Column(String(100), nullable=True)
+    note_id = Column(String(100), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    username = Column(String(100), nullable=True)
+    content = Column(Text, nullable=False)
     
-    # 回复内容
-    reply_content: Mapped[str] = mapped_column(Text)
-    reply_status: Mapped[str] = mapped_column(String(20), default="success")  # success/failed/pending
+    # 回复信息
+    reply_content = Column(Text, nullable=False)
+    reply_status = Column(String(20), default="pending")  # pending, success, failed
+    reply_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, nullable=True)
     
-    # 错误信息
-    error_message: Mapped[Optional[str]] = mapped_column(Text)
-    
-    # 时间戳
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     
     # 关系
-    user: Mapped["User"] = relationship("User", back_populates="reply_history")
-    
-    def __repr__(self):
-        return f"<ReplyHistory(id={self.id}, target_type={self.target_type})>"
+    account = relationship("XHSAccount", back_populates="reply_history")
+    rule = relationship("ReplyRule")
+    user = relationship("User", back_populates="reply_history")
 
 
-class Subscription(Base):
-    """订阅记录模型"""
-    __tablename__ = "subscriptions"
+class SubscriptionOrder(Base):
+    """订阅订单模型"""
+    __tablename__ = "subscription_orders"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
-    # 订阅信息
-    plan: Mapped[str] = mapped_column(String(20))  # free/pro/enterprise
-    amount: Mapped[int] = mapped_column(Integer)  # 金额（分）
-    currency: Mapped[str] = mapped_column(String(3), default="CNY")
+    # 订单信息
+    order_no = Column(String(64), unique=True, index=True)
+    amount = Column(Float, default=0)
+    tier = Column(String(20), nullable=False)
+    duration_days = Column(Integer, default=30)
     
     # 支付信息
-    payment_method: Mapped[Optional[str]] = mapped_column(String(20))  # alipay/wechatpay
-    payment_id: Mapped[Optional[str]] = mapped_column(String(100), unique=True)
+    payment_method = Column(String(20), nullable=True)  # wechat, alipay
+    payment_status = Column(String(20), default="pending")  # pending, paid, failed
+    paid_at = Column(DateTime, nullable=True)
     
-    # 时间信息
-    period_start: Mapped[datetime] = mapped_column(DateTime)
-    period_end: Mapped[datetime] = mapped_column(DateTime)
-    
-    # 状态
-    status: Mapped[str] = mapped_column(String(20), default="active")  # active/cancelled/expired
-    
-    # 时间戳
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f"<Subscription(id={self.id}, plan={self.plan}, status={self.status})>"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

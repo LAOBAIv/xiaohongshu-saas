@@ -8,10 +8,10 @@ from fastapi import Depends, HTTPException, Path, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.core.security import decode_token
 from app.models.user import User
 
@@ -19,9 +19,9 @@ from app.models.user import User
 security = HTTPBearer(auto_error=False)
 
 
-async def get_current_user(
+def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)]
 ) -> User:
     """获取当前用户"""
     if not credentials:
@@ -49,7 +49,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+    result = db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
     
     if not user:
@@ -67,28 +67,28 @@ async def get_current_user(
     return user
 
 
-async def get_optional_user(
+def get_optional_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    db: Annotated[Session, Depends(get_db)] = None
 ) -> Optional[User]:
     """获取可选用户（未登录返回None）"""
     if not credentials:
         return None
     
     try:
-        return await get_current_user(credentials, db)
+        return get_current_user(credentials, db)
     except HTTPException:
         return None
 
 
 # 类型别名
 CurrentUser = Annotated[User, Depends(get_current_user)]
-DbSession = Annotated[AsyncSession, Depends(get_db)]
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 # ========== 账号权限检查 ==========
 
-async def get_user_account(
+def get_user_account(
     account_id: Annotated[int, Path(ge=1)],
     user: CurrentUser,
     db: DbSession
@@ -97,7 +97,7 @@ async def get_user_account(
     from app.models.db_models import XHSAccount
     from sqlalchemy import and_
     
-    result = await db.execute(
+    result = db.execute(
         select(XHSAccount).where(
             and_(
                 XHSAccount.id == account_id,
@@ -116,7 +116,7 @@ async def get_user_account(
     return account
 
 
-async def get_user_rule(
+def get_user_rule(
     rule_id: Annotated[int, Path(ge=1)],
     user: CurrentUser,
     db: DbSession
@@ -125,7 +125,7 @@ async def get_user_rule(
     from app.models.db_models import ReplyRule
     from sqlalchemy import and_
     
-    result = await db.execute(
+    result = db.execute(
         select(ReplyRule).where(
             and_(
                 ReplyRule.id == rule_id,

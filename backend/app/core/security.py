@@ -3,25 +3,27 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Optional
+import hashlib
+import secrets
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-# 密码加密上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 密码Salt
+SALT = "xiaohongshu_saas_salt_2024"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """验证密码"""
-    return pwd_context.verify(plain_password, hashed_password)
+    password_hash = hashlib.sha256((plain_password + SALT).encode()).hexdigest()
+    return password_hash == hashed_password
 
 
 def get_password_hash(password: str) -> str:
     """生成密码哈希"""
-    return pwd_context.hash(password)
+    return hashlib.sha256((password + SALT).encode()).hexdigest()
 
 
 def create_access_token(

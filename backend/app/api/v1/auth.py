@@ -34,13 +34,13 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 
 
 @router.post("/register", response_model=LoginResponse)
-async def register(
+def register(
     request: RegisterRequest,
     db: DbSession
 ):
     """用户注册"""
     # 检查用户名是否已存在
-    result = await db.execute(
+    result = db.execute(
         select(User).where(User.username == request.username)
     )
     if result.scalar_one_or_none():
@@ -51,7 +51,7 @@ async def register(
     
     # 检查邮箱是否已存在
     if request.email:
-        result = await db.execute(
+        result = db.execute(
             select(User).where(User.email == request.email)
         )
         if result.scalar_one_or_none():
@@ -71,8 +71,8 @@ async def register(
     )
     
     db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    db.refresh(user)
     
     # 生成Token
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -86,13 +86,13 @@ async def register(
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(
+def login(
     request: LoginRequest,
     db: DbSession
 ):
     """用户登录"""
     # 查找用户（支持用户名或邮箱）
-    result = await db.execute(
+    result = db.execute(
         select(User).where(
             (User.username == request.username) | 
             (User.email == request.username)
@@ -114,7 +114,7 @@ async def login(
     
     # 更新最后登录时间
     user.last_login_at = datetime.utcnow()
-    await db.commit()
+    db.commit()
     
     # 生成Token
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -128,7 +128,7 @@ async def login(
 
 
 @router.post("/refresh", response_model=LoginResponse)
-async def refresh_token(
+def refresh_token(
     request: RefreshTokenRequest,
     db: DbSession
 ):
@@ -142,7 +142,7 @@ async def refresh_token(
         )
     
     user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+    result = db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
     
     if not user or not user.is_active:
@@ -163,14 +163,14 @@ async def refresh_token(
 
 
 @router.post("/logout")
-async def logout(current_user: CurrentUser):
+def logout(current_user: CurrentUser):
     """退出登录"""
     # 在实际应用中，可以将token加入黑名单
     return {"message": "退出成功"}
 
 
 @router.post("/change-password")
-async def change_password(
+def change_password(
     request: ChangePasswordRequest,
     current_user: CurrentUser,
     db: DbSession
@@ -187,18 +187,18 @@ async def change_password(
     
     # 更新密码
     user.password_hash = get_password_hash(request.new_password)
-    await db.commit()
+    db.commit()
     
     return {"message": "密码修改成功"}
 
 
 @router.post("/forgot-password")
-async def forgot_password(
+def forgot_password(
     request: ForgotPasswordRequest,
     db: DbSession
 ):
     """忘记密码（发送重置邮件）"""
-    result = await db.execute(
+    result = db.execute(
         select(User).where(User.email == request.email)
     )
     user = result.scalar_one_or_none()

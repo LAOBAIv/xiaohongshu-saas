@@ -79,10 +79,10 @@ class CookieRefreshRequest(BaseModel):
 class ReplyRuleBase(BaseModel):
     """规则基础 Schema"""
     name: str = Field(..., min_length=1, max_length=100)
-    rule_type: str = Field(default="comment", pattern="^(comment|private_message)$")
+    rule_type: str = Field(..., pattern="^(comment|private_message)$")
     match_type: str = Field(default="fuzzy", pattern="^(exact|fuzzy|semantic)$")
-    keywords: Optional[str] = Field(default="", description="关键词，多个用逗号分隔")
-    reply_templates: Optional[str] = Field(default="", description="回复模板，多个用换行符分隔")
+    keywords: str = Field(..., description="关键词，多个用逗号分隔")
+    reply_templates: str = Field(..., description="回复模板，多个用换行符分隔")
 
 
 class ReplyRuleCreate(ReplyRuleBase):
