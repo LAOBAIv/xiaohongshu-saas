@@ -1,312 +1,295 @@
 # 小红书自动回复 SaaS 平台
 
-一个多租户的小红书自动化运营平台，支持多用户独立配置和管理。
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18.2-blue" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-5.0-blue" alt="TypeScript">
+  <img src="https://img.shields.io/badge/FastAPI-0.104-green" alt="FastAPI">
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+</p>
 
-## 系统架构
+> 小红书自动回复 SaaS 平台 - 自动化运营工具
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        用户端                                │
-├──────────┬──────────┬──────────┬──────────┬────────────────┤
-│  Web端   │  移动端  │  小程序  │   API    │   Chrome插件   │
-└────┬─────┴────┬─────┴────┬─────┴────┬─────┴───────┬────────┘
-     │          │          │          │             │
-     └──────────┴──────────┴──────────┴─────────────┘
-                          │
-                 ┌────────▼────────┐
-                 │   API 网关      │
-                 │   (Nginx)       │
-                 └────────┬────────┘
-                          │
-     ┌────────────────────┼────────────────────┐
-     │                    │                    │
-┌────▼────┐        ┌─────▼─────┐       ┌──────▼──────┐
-│ 用户服务 │        │ 机器人服务 │       │  支付服务   │
-│         │        │           │       │             │
-└────┬────┘        └─────┬─────┘       └──────┬──────┘
-     │                   │                    │
-     │        ┌──────────┼──────────┐         │
-     │        │          │          │         │
-     │   ┌────▼───┐ ┌────▼───┐ ┌────▼───┐    │
-     │   │Worker1 │ │Worker2 │ │Worker3 │ ... │
-     │   └────────┘ └────────┘ └────────┘    │
-     │                                        │
-     └────────────────┬───────────────────────┘
-                      │
-              ┌───────▼───────┐
-              │   数据库      │
-              │  PostgreSQL   │
-              └───────────────┘
-```
+## 📚 目录
 
-## 核心功能
+- [功能特性](#功能特性)
+- [技术架构](#技术架构)
+- [快速开始](#快速开始)
+- [本地开发](#本地开发)
+- [Docker 部署](#docker-部署)
+- [生产环境部署](#生产环境部署)
+- [API 文档](#api-文档)
+- [常见问题](#常见问题)
 
-### 👤 用户管理
-- [x] 用户注册/登录（邮箱、手机号）
-- [x] 第三方登录（微信、Google、GitHub）
-- [x] 会员等级体系（免费/专业/企业）
-- [x] 用户个人中心
+---
 
-### 🔧 配置管理
-- [x] 多账号管理（小红书账号）
-- [x] Cookie 自动刷新
-- [x] 回复规则配置
-- [x] 关键词库管理
-- [x] 敏感词过滤
+## ✨ 功能特性
 
-### 🤖 自动化功能
-- [x] 自动监控评论
-- [x] 自动监控私信
-- [x] 智能关键词匹配回复
-- [x] AI 语义理解回复（可选）
-- [x] 定时任务调度
+| 功能 | 说明 |
+|------|------|
+| 📱 多账号管理 | 同时管理多个小红书账号 |
+| 🔄 自动回复 | 关键词匹配/AI智能/随机回复 |
+| 📊 数据统计 | 回复数据可视化分析 |
+| 👥 会员订阅 | 免费/专业/企业多套餐 |
+| ⚙️ 系统设置 | 个性化配置 |
 
-### 📊 数据统计
-- [x] 回复数据统计
-- [x] 趋势图表
-- [x] 导出报表
-- [x] 实时日志
+---
 
-### 💰 订阅支付
-- [x] 多种套餐选择
-- [x] 微信/支付宝支付
-- [x] 会员到期提醒
-- [x] 套餐升降级
-
-### 🔌 扩展功能
-- [x] Webhook 通知
-- [x] API 接口
-- [x] Chrome 浏览器插件
-- [x] 企业微信集成
-
-## 技术栈
-
-### 后端
-- **语言**: Python 3.12+
-- **框架**: FastAPI
-- **数据库**: PostgreSQL + Redis
-- **任务队列**: Celery + RabbitMQ
-- **ORM**: SQLAlchemy 2.0
+## 🏗 技术架构
 
 ### 前端
 - **框架**: React 18 + TypeScript
-- **UI**: Ant Design 5.0
-- **状态管理**: Zustand
+- **构建**: Vite
+- **状态**: Pinia
+- **UI**: Ant Design
 - **图表**: ECharts
 
-### 部署
-- **容器**: Docker + Docker Compose
-- **反向代理**: Nginx
-- **HTTPS**: Let's Encrypt
+### 后端
+- **框架**: FastAPI
+- **数据库**: SQLite (开发) / PostgreSQL (生产)
+- **认证**: JWT
+- **部署**: Docker Compose
 
-## 快速开始
+---
 
-### 开发环境
+## 🚀 快速开始
+
+### 前置要求
+
+| 软件 | 版本要求 |
+|------|----------|
+| Node.js | ≥ 18.0 |
+| Python | ≥ 3.10 |
+| Git | - |
+
+### 1. 克隆项目
+
+```bash
+git clone https://github.com/LAOBAIv/xiaohongshu-saas.git
+cd xiaohongshu-saas
+```
+
+### 2. 启动后端
+
+```bash
+cd backend
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或: venv\Scripts\activate  # Windows
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动服务
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 3. 启动前端
+
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+### 4. 访问系统
+
+- 前端: http://localhost:3000
+- 后端: http://localhost:8000
+- API 文档: http://localhost:8000/docs
+
+---
+
+## 🐳 Docker 部署
+
+### 使用 Docker Compose
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-repo/xiaohongshu-saas.git
+git clone https://github.com/LAOBAIv/xiaohongshu-saas.git
 cd xiaohongshu-saas
 
-# 启动开发环境
-docker-compose -f docker-compose.dev.yml up -d
-
-# 访问服务
-# 前端: http://localhost:3000
-# 后端: http://localhost:8000
-# API文档: http://localhost:8000/docs
+# 启动所有服务
+docker-compose up -d
 ```
 
-### 生产环境
+### 手动 Docker 构建
 
 ```bash
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件
+# 构建后端镜像
+docker build -t xhs-saas-backend ./backend
+
+# 构建前端镜像
+docker build -t xhs-saas-frontend ./frontend
+
+# 运行容器
+docker run -d -p 8000:8000 xhs-saas-backend
+docker run -d -p 3000:3000 xhs-saas-frontend
+```
+
+---
+
+## ☁️ 生产环境部署
+
+### 1. 服务器要求
+
+| 配置 | 最低 | 推荐 |
+|------|------|------|
+| CPU | 2 核 | 4 核 |
+| 内存 | 4 GB | 8 GB |
+| 磁盘 | 20 GB | 50 GB |
+| 系统 | Ubuntu 20.04+ | Ubuntu 22.04+ |
+
+### 2. 环境变量配置
+
+创建 `.env` 文件：
+
+```bash
+# .env
+ENV=production
+SECRET_KEY=生成强随机密钥
+DATABASE_URL=postgresql://user:password@localhost:5432/xhs_saas
+ALLOWED_ORIGINS=https://your-domain.com
+```
+
+生成密钥：
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### 3. PostgreSQL 安装
+
+```bash
+# 安装 PostgreSQL
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# 创建数据库
+sudo -u postgres createuser xhs_user
+sudo -u postgres createdb xhs_saas
+sudo -u postgres psql -c "ALTER USER xhs_user WITH PASSWORD 'your_password';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE xhs_saas TO xhs_user;"
+```
+
+### 4. Nginx 配置
+
+```nginx
+# /etc/nginx/sites-available/xhs-saas
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
+
+    # 前端静态文件
+    location / {
+        root /var/www/xhs-saas/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API 代理
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+### 5. Systemd 服务
+
+```ini
+# /etc/systemd/system/xhs-saas.service
+[Unit]
+Description=XHS SaaS Backend
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/xhs-saas/backend
+Environment="PATH=/opt/xhs-saas/backend/venv/bin"
+Environment="ENV=production"
+ExecStart=/opt/xhs-saas/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 6. 启动服务
+
+```bash
+# 重载 systemd
+sudo systemctl daemon-reload
 
 # 启动服务
-docker-compose -f docker-compose.prod.yml up -d
+sudo systemctl start xhs-saas
+sudo systemctl enable xhs-saas
 
-# 配置 Nginx
-cp nginx/nginx.conf.example nginx/nginx.conf
+# 检查状态
+sudo systemctl status xhs-saas
 ```
 
-## 项目结构
+---
 
-```
-├── backend/                    # 后端服务
-│   ├── app/
-│   │   ├── api/               # API 路由
-│   │   │   ├── v1/
-│   │   │   │   ├── auth.py    # 认证接口
-│   │   │   │   ├── user.py    # 用户接口
-│   │   │   │   ├── account.py # 账号接口
-│   │   │   │   ├── rule.py    # 规则接口
-│   │   │   │   └── stats.py   # 统计接口
-│   │   │   └── deps.py        # 依赖注入
-│   │   ├── core/              # 核心配置
-│   │   │   ├── config.py      # 配置管理
-│   │   │   ├── security.py    # 安全相关
-│   │   │   └── database.py    # 数据库
-│   │   ├── models/            # 数据模型
-│   │   │   ├── user.py        # 用户模型
-│   │   │   ├── account.py     # 账号模型
-│   │   │   └── rule.py        # 规则模型
-│   │   ├── schemas/           # Pydantic 模型
-│   │   ├── services/          # 业务逻辑
-│   │   │   ├── auth.py        # 认证服务
-│   │   │   ├── account.py     # 账号服务
-│   │   │   ├── crawler.py     # 爬虫服务
-│   │   │   └── reply.py       # 回复服务
-│   │   ├── tasks/             # 异步任务
-│   │   └── utils/             # 工具函数
-│   ├── alembic/               # 数据库迁移
-│   ├── tests/                 # 测试
-│   └── main.py                # 入口文件
-│
-├── frontend/                   # 前端应用
-│   ├── src/
-│   │   ├── api/              # API 调用
-│   │   ├── components/       # 公共组件
-│   │   ├── pages/            # 页面组件
-│   │   ├── hooks/            # 自定义 Hooks
-│   │   ├── stores/           # 状态管理
-│   │   ├── styles/           # 样式文件
-│   │   ├── types/            # TypeScript 类型
-│   │   ├── utils/            # 工具函数
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── public/
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── worker/                     # 异步任务 worker
-│   ├── crawler/               # 爬虫任务
-│   │   ├── xhs_client.py      # 小红书客户端
-│   │   └── comment_monitor.py # 评论监控
-│   ├── reply/                 # 回复任务
-│   │   └── reply_engine.py    # 回复引擎
-│   └── main.py
-│
-├── nginx/                      # Nginx 配置
-├── docker/                     # Docker 配置
-├── scripts/                    # 运维脚本
-├── docs/                       # 文档
-└── README.md
-```
+## 📖 API 文档
 
-## API 接口
+启动后端后访问: http://localhost:8000/docs
 
-### 认证接口
-| 方法 | 路径 | 描述 |
+### 主要接口
+
+| 接口 | 方法 | 说明 |
 |------|------|------|
-| POST | /api/v1/auth/register | 用户注册 |
-| POST | /api/v1/auth/login | 用户登录 |
-| POST | /api/v1/auth/logout | 退出登录 |
-| POST | /api/v1/auth/refresh | 刷新 Token |
-| POST | /api/v1/auth/forgot-password | 忘记密码 |
+| `/api/v1/auth/register` | POST | 用户注册 |
+| `/api/v1/auth/login` | POST | 用户登录 |
+| `/api/v1/user/profile` | GET | 获取用户资料 |
+| `/api/v1/accounts` | GET/POST | 账号列表/添加 |
+| `/api/v1/accounts/{id}/rules` | GET/POST | 规则列表/创建 |
+| `/api/v1/accounts/stats/overview` | GET | 数据统计 |
 
-### 用户接口
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | /api/v1/user/profile | 获取用户信息 |
-| PUT | /api/v1/user/profile | 更新用户信息 |
-| GET | /api/v1/user/subscription | 获取订阅信息 |
+---
 
-### 账号接口
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | /api/v1/accounts | 获取账号列表 |
-| POST | /api/v1/accounts | 添加账号 |
-| PUT | /api/v1/accounts/{id} | 更新账号 |
-| DELETE | /api/v1/accounts/{id} | 删除账号 |
-| POST | /api/v1/accounts/{id}/refresh-cookie | 刷新 Cookie |
+## 🔧 常见问题
 
-### 规则接口
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | /api/v1/rules | 获取规则列表 |
-| POST | /api/v1/rules | 创建规则 |
-| PUT | /api/v1/rules/{id} | 更新规则 |
-| DELETE | /api/v1/rules/{id} | 删除规则 |
+### Q: 前端无法连接后端
 
-### 统计接口
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | /api/v1/stats/overview | 统计概览 |
-| GET | /api/v1/stats/replies | 回复统计 |
-| GET | /api/v1/stats/trend | 趋势数据 |
+检查 `frontend/src/api/index.ts` 中的 `API_BASE_URL` 是否正确。
 
-## 套餐说明
+### Q: 数据库连接失败
 
-| 功能 | 免费版 | 专业版 | 企业版 |
-|------|--------|--------|--------|
-| 账号数量 | 1 | 5 | 无限 |
-| 每日回复上限 | 50 | 500 | 无限 |
-| 评论监控 | ✓ | ✓ | ✓ |
-| 私信监控 | ✗ | ✓ | ✓ |
-| 关键词规则 | 5 | 50 | 无限 |
-| AI 智能回复 | ✗ | ✓ | ✓ |
-| 数据统计 | 基础 | 完整 | 完整 |
-| API 接口 | ✗ | ✓ | ✓ |
-| 专属客服 | ✗ | ✗ | ✓ |
-| 价格 | ¥0/月 | ¥99/月 | ¥299/月 |
+确认 `.env` 中的 `DATABASE_URL` 格式正确。
 
-## 安全特性
+### Q: Token 过期
 
-- [x] 密码加密存储（bcrypt）
-- [x] JWT Token 认证
-- [x] 访问频率限制
-- [x] SQL 注入防护
-- [x] XSS 防护
-- [x] CORS 配置
-- [x] 请求日志审计
+登录后会返回 access_token 和 refresh_token，refresh_token 用于刷新 access_token。
 
-## 监控告警
+### Q: 如何修改套餐配置
 
-- [x] 系统健康检查
-- [x] 异常告警通知
-- [x] 业务指标监控
-- [x] 日志聚合分析
+编辑 `backend/app/core/config.py` 中的 `SUBSCRIPTION_PLANS`。
 
-## 常见问题
+---
 
-### Q: 如何获取小红书 Cookie？
-A: 
-1. 浏览器打开小红书并登录
-2. 按 F12 打开开发者工具
-3. 切换到 Network 标签
-4. 刷新页面，点击任意请求
-5. 在 Request Headers 中找到 Cookie
+## 📄 License
 
-### Q: 账号被封禁怎么办？
-A: 
-1. 降低回复频率
-2. 使用更自然的回复内容
-3. 使用多个账号轮询
-4. 建议使用企业号
+MIT License - 见 LICENSE 文件
 
-### Q: 支持哪些支付方式？
-A: 
-- 微信支付
-- 支付宝
-- 企业对公转账（企业版）
+---
 
-## 贡献指南
+## 👤 开发者
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/xxx`)
-3. 提交更改 (`git commit -m 'Add xxx'`)
-4. 推送分支 (`git push origin feature/xxx`)
-5. 创建 Pull Request
-
-## 许可证
-
-MIT License - see [LICENSE](LICENSE) for details
-
-## 联系方式
-
-- 邮箱: support@example.com
-- QQ群: 123456789
-- 微信: 添加备注"SaaS咨询"
+- GitHub: [@LAOBAIv](https://github.com/LAOBAIv)
